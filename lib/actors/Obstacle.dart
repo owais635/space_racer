@@ -3,13 +3,12 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 class Obstacle extends PositionComponent with HasGameRef, CollisionCallbacks {
-  final double speed = 200;
+  final double speed;
 
   static const enemySize = 50.0;
 
-  Obstacle({
-    super.position,
-  }) : super(
+  Obstacle({super.position, this.speed = 200})
+      : super(
           size: Vector2(128, 64),
           anchor: Anchor.center,
         );
