@@ -2,15 +2,17 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:space_racer/actors/BulletPack.dart';
 import "package:space_racer/actors/Player.dart";
 
 import 'package:flame/game.dart';
 import 'package:space_racer/actors/Obstacle.dart';
 import 'package:space_racer/controls/PlayerShootButton.dart';
 import 'package:space_racer/controls/PlayerHorizontalControlButton.dart';
+import 'package:space_racer/utils/getRandomLaneIndex.dart';
+
+const double bulletPackChance = 0.11;
 
 class SpaceRacerGame extends FlameGame with HasCollisionDetection {
   late Player player;
@@ -33,7 +35,7 @@ class SpaceRacerGame extends FlameGame with HasCollisionDetection {
 
     // Update difficulty every few seconds
     difficultyTimer += dt;
- 
+
     difficultyText.text = 'Difficulty: ${difficultyLevel.toStringAsFixed(1)}';
 
     if (difficultyTimer > 5) {
@@ -47,8 +49,28 @@ class SpaceRacerGame extends FlameGame with HasCollisionDetection {
     // Spawn if we've "moved" far enough
     if (distanceSinceLastSpawn >= minGap) {
       spawnObstacle(fallSpeed);
+
+      if (bulletPackChance > Random().nextDouble()) {
+        spawnBulletPack(fallSpeed, lastLaneIndex!);
+      }
+
       distanceSinceLastSpawn = 0;
     }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..strokeWidth = 2;
+
+    canvas.drawLine(
+      Offset(0, size.y - 200),
+      Offset(size.x, size.y - 200),
+      paint,
+    );
   }
 
   @override
@@ -105,16 +127,30 @@ class SpaceRacerGame extends FlameGame with HasCollisionDetection {
     final lanes = player.lanePositions;
 
     // Choose a lane index that is not the same as the last one
-    int laneIndex;
-    do {
-      laneIndex = Random().nextInt(lanes.length);
-    } while (laneIndex == lastLaneIndex && lanes.length > 1);
+    int bulletLaneIndex = getRandomLaneIndex(
+        lanes.length, lastLaneIndex != null ? <int>{lastLaneIndex!} : <int>{});
 
-    final x = lanes[laneIndex];
-    lastLaneIndex = laneIndex; // remember this spawn
+    lastLaneIndex = bulletLaneIndex; // remember this spawn
+
+    final bulletXPos = lanes[bulletLaneIndex];
 
     add(Obstacle(
-      position: Vector2(x, -60),
+      position: Vector2(bulletXPos, -60),
+      speed: speed,
+    ));
+  }
+
+  void spawnBulletPack(double speed, int bulletLaneIndex) {
+    final lanes = player.lanePositions;
+
+    // Choose a lane index that is not the same as the last one
+    int bulletPackLaneIndex =
+        getRandomLaneIndex(lanes.length, <int>{bulletLaneIndex});
+
+    final bulletPackXPos = lanes[bulletPackLaneIndex];
+
+    add(BulletPack(
+      position: Vector2(bulletPackXPos, -60),
       speed: speed,
     ));
   }
