@@ -1,17 +1,41 @@
-import 'package:flame/collisions.dart';
+import 'dart:math';
 import 'package:flame/components.dart';
+import 'package:flame/collisions.dart';
 import 'package:flutter/material.dart';
 
 class Obstacle extends PositionComponent with HasGameRef, CollisionCallbacks {
   final double speed;
+  final List<Offset> _craterPositions = [];
+  final List<Offset> _asteroidPoints = [];
 
   static const enemySize = 50.0;
 
   Obstacle({super.position, this.speed = 200})
       : super(
-          size: Vector2(128, 64),
+          size: Vector2(64, 64),
           anchor: Anchor.center,
-        );
+        ) {
+    final rng = Random();
+
+    // === Craters ===
+    final craterCount = rng.nextInt(3) + 2;
+    for (int i = 0; i < craterCount; i++) {
+      final dx = rng.nextDouble() * (size.x - 12) + 6;
+      final dy = rng.nextDouble() * (size.y - 12) + 6;
+      _craterPositions.add(Offset(dx, dy));
+    }
+
+    // === Irregular polygon points (like classic asteroid) ===
+    final segments = 8;
+    final radius = size.x / 2;
+    for (int i = 0; i < segments; i++) {
+      final angle = (2 * pi / segments) * i;
+      final r = radius * (0.8 + rng.nextDouble() * 0.4); // jaggedness
+      final x = size.x / 2 + cos(angle) * r;
+      final y = size.y / 2 + sin(angle) * r;
+      _asteroidPoints.add(Offset(x, y));
+    }
+  }
 
   @override
   Future<void> onLoad() async {
@@ -21,72 +45,23 @@ class Obstacle extends PositionComponent with HasGameRef, CollisionCallbacks {
 
   @override
   void render(Canvas canvas) {
-    final rect = Rect.fromCenter(
-      center: Offset(size.x / 2, size.y / 2),
-      width: size.x,
-      height: size.y,
-    );
-
-    // === Base Gradient Paint (Tech metal look) ===
-    final bodyPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [Colors.grey.shade100, Colors.grey.shade700],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ).createShader(rect);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, Radius.circular(10)),
-      bodyPaint,
-    );
-
-    // === Edge highlight on top side ===
-    final topHighlightPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [Colors.white.withOpacity(0.3), Colors.transparent],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(rect);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, Radius.circular(10)),
-      topHighlightPaint,
-    );
-
-    // === Craters/Tech Spots ===
-    final craterPaint = Paint()..color = Colors.black.withOpacity(0.25);
-    final center = Offset(size.x / 2, size.y / 2);
-
-    canvas.drawCircle(center + Offset(-50, -6), 5, craterPaint);
-    canvas.drawCircle(center + Offset(0, 4), 4, craterPaint);
-    canvas.drawCircle(center + Offset(50, -4), 6, craterPaint);
-
-    // === Optional Tech Panel Line ===
-    final linePaint = Paint()
-      ..color = Colors.grey.shade800.withOpacity(0.3)
-      ..strokeWidth = 1;
-
-    canvas.drawLine(
-      Offset(size.x * 0.25, size.y * 0.1),
-      Offset(size.x * 0.25, size.y * 0.9),
-      linePaint,
-    );
-    canvas.drawLine(
-      Offset(size.x * 0.75, size.y * 0.1),
-      Offset(size.x * 0.75, size.y * 0.9),
-      linePaint,
-    );
-
-    // === Glow Outline ===
-    final glowPaint = Paint()
-      ..color = Colors.lightBlueAccent.withOpacity(0.2)
+    final outlinePaint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.inflate(2), Radius.circular(12)),
-      glowPaint,
-    );
+    final craterPaint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    // === Draw jagged asteroid outline ===
+    final path = Path()..addPolygon(_asteroidPoints, true);
+    canvas.drawPath(path, outlinePaint);
+
+    // === Draw craters ===
+    for (final pos in _craterPositions) {
+      canvas.drawCircle(pos, 3, craterPaint);
+    }
   }
 
   @override

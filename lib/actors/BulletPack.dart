@@ -23,41 +23,45 @@ class BulletPack extends PositionComponent with HasGameRef, CollisionCallbacks {
 
   @override
   void render(Canvas canvas) {
-    final cellWidth = size.x / 5;
-    final bulletHeight = size.y * 0.6;
-    final capHeight = size.y * 0.4;
+    final paint = Paint()
+      ..color = Colors.transparent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
-    final bulletPaint = Paint()..color = const Color(0xFF8B6F37); // casing
-    final capPaint = Paint()..color = const Color(0xFFFFF176); // yellow tip
-    final capEdgePaint = Paint()
-      ..color = const Color(0xFFD84315); // red/orange edge
-    final borderPaint = Paint()
-      ..color = Colors.black.withOpacity(0.4)
-      ..style = PaintingStyle.stroke;
+    final outlineColor = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
-    for (int i = 0; i < 5; i++) {
-      final x = i * cellWidth;
+    final bulletColor = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
 
-      // bullet casing
-      final casingRect = Rect.fromLTWH(x, capHeight, cellWidth, bulletHeight);
-      canvas.drawRect(casingRect, bulletPaint);
-      canvas.drawRect(casingRect, borderPaint);
-
-      // bullet cap
-      final capRect = Rect.fromLTWH(x, 0, cellWidth, capHeight);
-      canvas.drawRect(capRect, capPaint);
-
-      // left edge for detail
-      final edgeRect = Rect.fromLTWH(x, 0, cellWidth * 0.1, capHeight);
-      canvas.drawRect(edgeRect, capEdgePaint);
-    }
-
-    // Optional: bottom base line
-    final basePaint = Paint()..color = Colors.black.withOpacity(0.2);
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.y - 2, size.x, 2),
-      basePaint,
+    final rect = Rect.fromCenter(
+      center: Offset(size.x / 2, size.y / 2),
+      width: size.x,
+      height: size.y,
     );
+
+    // Draw outline box (like all buttons in the reference image)
+    final border = RRect.fromRectAndRadius(rect, Radius.circular(4));
+    canvas.drawRRect(border, outlineColor);
+
+    // Draw bullets inside (you can tweak spacing/count)
+    const int bulletCount = 3;
+    final bulletWidth = size.x / (bulletCount * 2);
+    final bulletHeight = size.y * 0.5;
+
+    for (int i = 0; i < bulletCount; i++) {
+      final x = size.x * 0.2 + i * bulletWidth * 2;
+      final bulletRect = RRect.fromRectAndCorners(
+        Rect.fromLTWH(x, size.y * 0.25, bulletWidth, bulletHeight),
+        topLeft: Radius.circular(2),
+        topRight: Radius.circular(2),
+      );
+
+      canvas.drawRRect(bulletRect, bulletColor);
+    }
   }
 
   @override

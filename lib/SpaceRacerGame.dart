@@ -12,7 +12,7 @@ import 'package:space_racer/controls/PlayerShootButton.dart';
 import 'package:space_racer/controls/PlayerHorizontalControlButton.dart';
 import 'package:space_racer/utils/getRandomLaneIndex.dart';
 
-const double bulletPackChance = 0.11;
+const double bulletPackChance = 1;
 
 class SpaceRacerGame extends FlameGame with HasCollisionDetection {
   late Player player;
@@ -180,11 +180,11 @@ class SpaceRacerGame extends FlameGame with HasCollisionDetection {
     xCursor += leftWidth + spacing;
 
     add(PlayerShootButton(
-      position: Vector2(xCursor, controlButtonYPos),
-      onPressed: () => player.shoot(),
-      onReleased: () => moveDirection = 0,
-      width: shootWidth,
-    ));
+        position: Vector2(xCursor, controlButtonYPos),
+        onPressed: () => player.shoot(),
+        onReleased: () => moveDirection = 0,
+        width: shootWidth,
+        initialAmmo: 0));
     xCursor += shootWidth + spacing;
 
     add(PlayerHorizontalControlButton(
